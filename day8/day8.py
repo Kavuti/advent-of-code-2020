@@ -57,9 +57,45 @@ def quiz2(instructions):
     print(accumulator)
 
 
+def visit(instructions):
+    accumulator = 0
+    visited_lines = []
+    i = 0
+    while i < len(instructions):
+        instruction = instructions[i]
+        if i in visited_lines:
+            return None
+        visited_lines.append(i)
+        if instruction[0] == "acc":
+            accumulator += int(instruction[1])
+            i += 1
+        elif instruction[0] == "jmp":
+            i += int(instruction[1])
+        else:
+            i += 1
+    return accumulator
+
+def quiz2_alternative(instructions):
+    for instruction in instructions:
+        if instruction[0] == "jmp":
+            instruction[0] = "nop"
+            result = visit(instructions)
+            if result:
+                print(result)
+                break
+            instruction[0] = "jmp"
+        elif instruction[0] == "nop":
+            instruction[0] = "jmp"
+            result = visit(instructions)
+            if result:
+                print(result)
+                break
+            instruction[0] = "nop"
+
 if __name__ == "__main__":
     lines = get_input().splitlines()
     instructions = [instruction.split(" ") for instruction in lines]
     quiz1(instructions)
     quiz2(instructions)
+    quiz2_alternative(instructions)
     

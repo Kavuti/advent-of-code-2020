@@ -1,9 +1,12 @@
 from functools import lru_cache
 import copy
 from pprint import pprint
+import sys
+
+sys.setrecursionlimit(100000000)
 
 def get_input():
-    with open("input.txt", "r") as file:
+    with open("input2.txt", "r") as file:
         return file.read()
 
 
@@ -36,6 +39,7 @@ def get_messages(data):
             messages.append(parsed_line[0])
     return messages
 
+
 def get_combo(*args):
     memory = {i: [] for i in range(len(args))}
     for i in range(len(args)):
@@ -63,14 +67,8 @@ def quiz1(data):
                 current_result = []
                 for char in combo.split(' '):
                     navigation_result = navigate(char)
-                    # print(navigation_result)
-                    # input()
                     current_result.append(navigation_result) 
-                # print(current_result)
-                # input()
                 [results.add(c) for c in get_combo(*current_result)]
-                # print(results)
-                # input()
             return results
 
     available = navigate('0')
@@ -84,7 +82,43 @@ def quiz1(data):
     print(count)
 
 
+def quiz2(data):
+    rules = get_rules(data)
+
+    messages = get_messages(data)
+
+    numbers = rules['0'][0]
+    numbers_split = numbers.split(' ')
+
+    @lru_cache
+    def navigate(current_number):
+        if len(rules[current_number]) == 1 and len(rules[current_number][0]) == 1:
+            return rules[current_number][0]
+        else:
+            results = set()
+            for combo in rules[current_number]:
+                current_result = []
+                for char in combo.split(' '):
+                    navigation_result = navigate(char)
+                    current_result.append(navigation_result) 
+                [results.add(c) for c in get_combo(*current_result)]
+            return results
+
+    count = 0
+    for message in messages:
+        message_copy = message
+        for number in numbers_split:
+            navigated = navigate(number)
+            for n in navigated:
+                if message_copy.startswith(n):
+                    message_copy = message_copy[len(n):]
+        if message_copy == '':
+            count += 1
+
+    print(count)
+
 
 if __name__ == "__main__":
     data = get_input().splitlines()
-    quiz1(data)
+    quiz2(data)
+    # print(get_rules(data))

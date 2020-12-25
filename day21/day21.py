@@ -18,90 +18,54 @@ def get_appearence_dict(data):
     return appearence
     
 
-def get_responsibles_dict(data):
-    memory = {}
-    friends = {}
-    appearence = {}
+def parse_data(data):
+    regex = re.compile(r"([a-z ]+) \(contains ([a-z, ]+)\)")
+    result = []
+    for line in data:
+        ingredients, allergens = regex.match(line).groups()
+        ingredients, allergens = set(ingredients.split()), set(allergens.split(", "))
+        result.append((ingredients, allergens))
+    return result
+        
+
+def get_result_dict(data):
+    result_data = parse_data(data)
     all_allergenes = set()
-    for dish in data:
-        ingredients = re.search(r"([a-z ]+) \(", dish).groups(1)[0].split(' ')
-        allergenes = re.search(r"\(contains (.+)\)", dish).groups(1)[0].split(', ')
-        for ingredient in ingredients:
-            if not ingredient in appearence:
-                appearence[ingredient] = 0
-            appearence[ingredient] += 1
-            if not ingredient in friends:
-                friends[ingredient] = set()
-            for i in ingredients:
-                friends[ingredient].add(i)
-            if not ingredient in memory:
-                memory[ingredient] = []
-            distinct_ingredients = set(memory[ingredient])
-            for allergene in allergenes:
-                all_allergenes.add(allergene)
-                if not allergene in distinct_ingredients and len(distinct_ingredients) > 0:
-                    for i in friends[ingredient]:
-                        if i in memory and not allergene in memory[i]:
-                            memory[i].append(allergene)
-                else:
-                    memory[ingredient].append(allergene)
-
-    allerg_resp = {}
-    potential_resps = {}
-
-    """
-        Fixare da qui in poi. Attualmente il dizionario ha molti conflitti. Bisogna quindi
-        prendere per ogni ingrediente gli allergeni potenziali e per ogni ingrediente con un solo
-        potenziale allergene si conferma la scelta. Per tutti gli altri ingredienti, si escludono
-        poi gli allergeni già utilizzati per gli ingredienti confermati.
-    """
+    [[all_allergenes.add(allergene) for allergene in allergenes] for _, allergenes in result_data]
+    result_dict = {}
+    potential_ingredients = {}
     for allergene in all_allergenes:
-        max_count = 0
-        max_responsible = None
-        for ingredient, ing_allergenes in memory.items():
-            count = ing_allergenes.count(allergene)
-            if count == max_count:
-                print(f"Conflicting {ingredient} with {max_responsible} on {allergene}")
-            if count > max_count:
-                max_count = count
-                max_responsible = ingredient
-        for ingredient, ing_allergenes in memory.items():
-            if ingredient != max_responsible and ingredient in ing_allergenes:
-                ing_allergenes.remove(allergene)
+        potential_ingredients[allergene] = set.intersection(*[ingredient for ingredient, allergenes in result_data if allergene in allergenes])
+    
+    while len(result_dict) < len(all_allergenes):
+        for allergene in all_allergenes:
+            [potential_ingredients[allergene].discard(ingredient) for ingredient in result_dict.keys()]
+            if len(potential_ingredients[allergene]) == 1:
+                result_dict[potential_ingredients[allergene].pop()] = allergene
 
-        memory[max_responsible] = [allergene]
-        allerg_resp[allergene] = max_responsible
-    return allerg_resp, appearence
+    return result_dict
 
 
 def quiz1(data):
-    allerg_resp, appearence = get_responsibles_dict(data)
-    without_allergenes = []
-    # appearence = get_appearence_dict(data)
-    all_ings = set()
-    for _, resp_ing in allerg_resp.items():
-        all_ings.add(resp_ing)
-    for ing in appearence.keys():
-        if ing not in all_ings:
-            without_allergenes.append(ing)
-
-    result = 0
-    for ingredient in without_allergenes:
-        result += appearence[ingredient]
-
-    print(result)
+    result_data = parse_data(data)
+    result_dict = get_result_dict(data)
+    all_ingredients = []
+    [[all_ingredients.append(ingredient) for ingredient in ingredients] for ingredients, _ in result_data]
+    ingredients = [ingredient for ingredient in result_dict.keys()]
+    print(len([ingredient for ingredient in all_ingredients if not ingredient in ingredients]))
+    
 
 
 def quiz2(data):
-    allerg_resp, _ = get_responsibles_dict(data)
-    allerg_resp_list = sorted(list(allerg_resp.keys()))
-    # result= = ""
-    print(allerg_resp)
-    ingredients = [allerg_resp[allerg] for allerg in allerg_resp_list]
-    print(",".join(ingredients))
+    result_data = parse_data(data)
+    result_dict = get_result_dict(data)
+    allergenes = sorted([allergene for _, allergene in result_dict.items()])
+    result_inverted = {v: k for k, v in result_dict.items()}
+    print(",".join([result_inverted[allergene] for allergene in allergenes]))
     
 
 if __name__ == "__main__":
     data = get_input().splitlines()
+    # print(get_result_dict(data))
     quiz1(data)
     quiz2(data)

@@ -1,21 +1,8 @@
 import re
-from pprint import pprint
 
 def get_input():
     with open("input.txt", "r") as file:
         return file.read()
-
-
-def get_appearence_dict(data):
-    appearence = {}
-    for dish in data:
-        ingredients = re.search(r"([a-z ]+) \(", dish).groups(1)[0].split(' ')
-        allergenes = re.search(r"\(contains (.+)\)", dish).groups(1)[0].split(', ')
-        for ingredient in ingredients:
-            if not ingredient in appearence:
-                appearence[ingredient] = 0
-            appearence[ingredient] += 1
-    return appearence
     
 
 def parse_data(data):
@@ -66,6 +53,5 @@ def quiz2(data):
 
 if __name__ == "__main__":
     data = get_input().splitlines()
-    # print(get_result_dict(data))
     quiz1(data)
     quiz2(data)

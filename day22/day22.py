@@ -13,7 +13,6 @@ def which_max(n1, n2):
         return 1
 
 
-
 def quiz1(p1, p2):
     while len(p1) > 0 and len(p2) > 0:
         if p1[0] > p2[0]:
@@ -36,19 +35,7 @@ def string_it(deck):
     return ",".join([str(card) for card in deck])
 
 
-def quiz2(p1, p2):
-    visited = {}
-
-    def evaluate_previous(game_no, l1, l2):
-        stringed = [string_it(l1), string_it(l2)]
-        if not game_no in visited:
-            visited[game_no] = []
-        if stringed in visited[game_no]:
-            return True
-        visited[game_no].append(stringed)
-        return False
-    
-    def elaborate_win(l1, l2, winner):
+def elaborate_win(l1, l2, winner):
         if winner == 0 and len(l2) > 0:
             l1.append(l1[0])
             l1.append(l2[0])
@@ -61,13 +48,16 @@ def quiz2(p1, p2):
             l2 = l2[1:]
         return l1, l2
 
-    def play_game(game_no, l1, l2):
-        new_game_no = game_no
+
+def play_game(l1, l2):
+        visited = set()
         while len(l1) > 0 and len(l2) > 0:
-            if evaluate_previous(game_no, l1, l2):
-                return game_no, 0
-            if len(l1)-1 >= l1[0] and len(l2)-1 >= l2[0]:
-                new_game_no, winner = play_game(new_game_no+1, l1[1:], l2[1:])
+            tupled = (tuple(l1), tuple(l2))
+            if tupled in visited:
+                return 0, l1, l2
+            visited.add(tupled)
+            if l1[0] < len(l1) and l2[0] < len(l2):
+                winner, _1, _2 = play_game(l1[1:l1[0]+1], l2[1:l2[0]+1])
                 l1, l2 = elaborate_win(l1, l2, winner)
             else:
                 if l1[0] > l2[0]:
@@ -76,12 +66,13 @@ def quiz2(p1, p2):
                     l1, l2 = elaborate_win(l1, l2, 1)
 
         if len(l2) == 0:
-            return elaborate_win(l1, l2, 0)
-        return elaborate_win(l1, l2, 1)
+            return 0, l1, l2
+        return 1, l1, l2
 
-    l1, l2 = play_game(0, p1, p2)
-    # print(l1, l2)
-    if len(l1) == 0:
+
+def quiz2(p1, p2):
+    winner, l1, l2 = play_game(p1, p2)
+    if winner == 1:
         print(sum([n*(len(l2)-i) for i, n in enumerate(l2)]))
     else:
         print(sum([n*(len(l1)-i) for i, n in enumerate(l1)]))
